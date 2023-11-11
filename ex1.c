@@ -64,28 +64,33 @@ int main(int argc, char *argv[])
 
     int width, height;
     int read_b, write_b;
+    char str_width[20], str_height[20];
 
-    // scriere in fisier
+    // scriere in fisier nume
     write(fd_out, "nume fisier: ", sizeof("nume fisier: "));
     write(fd_out, argv[1], sizeof(argv[1]));
     write(fd_out,"\n",sizeof("\n"));
+    //citeste si scrie latime
     read_b = read(fd_in, &width, 4);
     if (read_b == -1)
         r_error();
     else
     {
         write(fd_out, "latime: ", sizeof("latime: "));
-        if ((write_b = write(fd_out, &width, 1)) == -1)
+        sprintf(str_height, "%d", height);
+        if ((write_b = write(fd_out, str_width, sizeof(str_width))) == -1)
             wr_error();
         write(fd_out, "\n", sizeof("\n"));
     }
-    read_b = read(fd_in, &width, 4);
+    //citeste si scrie inaltime
+    read_b = read(fd_in, &height, 4);
     if (read_b == -1)
         r_error();
     else
     {
         write(fd_out, "inaltime: ", sizeof("inaltime: "));
-        if ((write_b = write(fd_out, &height, 1)) == -1)
+        sprintf(str_height, "%d", height);
+        if ((write_b = write(fd_out, str_height, sizeof(str_height))) == -1)
             wr_error();
         write(fd_out, "\n", sizeof("\n"));
     }
