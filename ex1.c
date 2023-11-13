@@ -98,6 +98,44 @@ int main(int argc, char *argv[])
         write(fd_out, "\n", sizeof("\n"));
     }
 
+    //stat data
+    struct stat data;
+    char dimensiune[5], user_id[20], time[20], acces[10];
+    if(stat(argv[1],&data) == -1)
+    {
+        perror("Eroare la functia stat:(    ");
+        exit(-1);
+    }
+    sprintf(dimensiune,"%ld",data.st_blksize);
+    sprintf(user_id,"%d",data.st_uid);
+    sprintf(time,"%ld",data.st_atime);
+    sprintf(acces,"%d",data.st_mode);
+
+    //dimensiune
+    write(fd_out, "dimensiune: ", strlen("dimensiune: "));
+        if ((write_b = write(fd_out, dimensiune, strlen(dimensiune))) == -1)
+            wr_error();
+        write(fd_out, "\n", sizeof("\n"));
+
+    //utilizator id
+    write(fd_out, "utilizator id: ", strlen("utilizator id: "));
+        if ((write_b = write(fd_out, user_id, strlen(user_id))) == -1)
+            wr_error();
+        write(fd_out, "\n", sizeof("\n"));
+
+    //timpul ultimei modificari
+    write(fd_out, "timpul ultimei modificari: ", strlen("timpul ultimei modificari: "));
+        if ((write_b = write(fd_out, time, strlen(time))) == -1)
+            wr_error();
+        write(fd_out, "\n", sizeof("\n"));
+
+    //acces 
+    write(fd_out, "drepturi de acces user: ", strlen("drepturi de acces user: "));
+        if ((write_b = write(fd_out, acces, strlen(acces))) == -1)
+            wr_error();
+        write(fd_out, "\n", sizeof("\n"));
+    
+
     // inchidere fisiere
     closing_files(fd_in, fd_out);
 
