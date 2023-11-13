@@ -34,6 +34,8 @@ void closing_files(int in, int out)
         close_error();
     }
 }
+
+
 int main(int argc, char *argv[])
 {
     // verificare argumente linie de comanda
@@ -67,18 +69,19 @@ int main(int argc, char *argv[])
     char str_width[20], str_height[20];
 
     // scriere in fisier nume
-    write(fd_out, "nume fisier: ", sizeof("nume fisier: "));
-    write(fd_out, argv[1], sizeof(argv[1]));
+    write(fd_out, "nume fisier: ", strlen("nume fisier: "));
+    write(fd_out, argv[1], strlen(argv[1]));
     write(fd_out,"\n",sizeof("\n"));
+
     //citeste si scrie latime
     read_b = read(fd_in, &width, 4);
     if (read_b == -1)
         r_error();
     else
     {
-        write(fd_out, "latime: ", sizeof("latime: "));
-        sprintf(str_height, "%d", height);
-        if ((write_b = write(fd_out, str_width, sizeof(str_width))) == -1)
+        write(fd_out, "latime: ", strlen("latime: "));
+        sprintf(str_width, "%d", width);
+        if ((write_b = write(fd_out, str_width, strlen(str_width))) == -1)
             wr_error();
         write(fd_out, "\n", sizeof("\n"));
     }
@@ -88,9 +91,9 @@ int main(int argc, char *argv[])
         r_error();
     else
     {
-        write(fd_out, "inaltime: ", sizeof("inaltime: "));
+        write(fd_out, "inaltime: ", strlen("inaltime: "));
         sprintf(str_height, "%d", height);
-        if ((write_b = write(fd_out, str_height, sizeof(str_height))) == -1)
+        if ((write_b = write(fd_out, str_height, strlen(str_height))) == -1)
             wr_error();
         write(fd_out, "\n", sizeof("\n"));
     }
