@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <time.h>
 
 void wr_error()
 {
@@ -34,7 +35,6 @@ void closing_files(int in, int out)
         close_error();
     }
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -71,9 +71,9 @@ int main(int argc, char *argv[])
     // scriere in fisier nume
     write(fd_out, "nume fisier: ", strlen("nume fisier: "));
     write(fd_out, argv[1], strlen(argv[1]));
-    write(fd_out,"\n",sizeof("\n"));
+    write(fd_out, "\n", sizeof("\n"));
 
-    //citeste si scrie latime
+    // citeste si scrie latime
     read_b = read(fd_in, &width, 4);
     if (read_b == -1)
         r_error();
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
             wr_error();
         write(fd_out, "\n", sizeof("\n"));
     }
-    //citeste si scrie inaltime
+    // citeste si scrie inaltime
     read_b = read(fd_in, &height, 4);
     if (read_b == -1)
         r_error();
@@ -98,43 +98,126 @@ int main(int argc, char *argv[])
         write(fd_out, "\n", sizeof("\n"));
     }
 
-    //stat data
+    // stat data
     struct stat data;
     char dimensiune[5], user_id[20], time[20], acces[10];
-    if(stat(argv[1],&data) == -1)
+    if (stat(argv[1], &data) == -1)
     {
         perror("Eroare la functia stat:(    ");
         exit(-1);
     }
-    sprintf(dimensiune,"%ld",data.st_blksize);
-    sprintf(user_id,"%d",data.st_uid);
-    sprintf(time,"%ld",data.st_atime);
-    sprintf(acces,"%d",data.st_mode);
+    sprintf(dimensiune, "%ld", data.st_blksize);
+    sprintf(user_id, "%d", data.st_uid);
+    sprintf(time, "%ld", data.st_atime);
+    sprintf(acces, "%d", data.st_mode);
 
-    //dimensiune
+    // dimensiune
     write(fd_out, "dimensiune: ", strlen("dimensiune: "));
-        if ((write_b = write(fd_out, dimensiune, strlen(dimensiune))) == -1)
-            wr_error();
-        write(fd_out, "\n", sizeof("\n"));
+    if ((write_b = write(fd_out, dimensiune, strlen(dimensiune))) == -1)
+        wr_error();
+    write(fd_out, "\n", sizeof("\n"));
 
-    //utilizator id
+    // utilizator id
     write(fd_out, "utilizator id: ", strlen("utilizator id: "));
-        if ((write_b = write(fd_out, user_id, strlen(user_id))) == -1)
-            wr_error();
-        write(fd_out, "\n", sizeof("\n"));
+    if ((write_b = write(fd_out, user_id, strlen(user_id))) == -1)
+        wr_error();
+    write(fd_out, "\n", sizeof("\n"));
 
-    //timpul ultimei modificari
+    // timpul ultimei modificari
     write(fd_out, "timpul ultimei modificari: ", strlen("timpul ultimei modificari: "));
-        if ((write_b = write(fd_out, time, strlen(time))) == -1)
-            wr_error();
-        write(fd_out, "\n", sizeof("\n"));
+    time_t last_modified_time = data.st_mtime;
+    char *formatted_time = ctime(&last_modified_time);
+    if (formatted_time[strlen(formatted_time) - 1] == '\n')
+    {
+        formatted_time[strlen(formatted_time) - 1] = '\0';
+    }
+    if ((write_b = write(fd_out, formatted_time, strlen(formatted_time))) == -1)
+        wr_error();
+    write(fd_out, "\n", sizeof("\n"));
 
-    //acces 
+    // drepturi de acces user
     write(fd_out, "drepturi de acces user: ", strlen("drepturi de acces user: "));
-        if ((write_b = write(fd_out, acces, strlen(acces))) == -1)
-            wr_error();
-        write(fd_out, "\n", sizeof("\n"));
-    
+    if (data.st_mode & S_IRUSR)
+    {
+        write(fd_out, "R", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IWUSR)
+    {
+        write(fd_out, "W", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IXUSR)
+    {
+        write(fd_out, "X", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    write(fd_out, "\n", sizeof("\n"));
+
+    // drepturi de acces grup
+    write(fd_out, "drepturi de acces grup: ", strlen("drepturi de acces grup: "));
+    if (data.st_mode & S_IRGRP)
+    {
+        write(fd_out, "R", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IWGRP)
+    {
+        write(fd_out, "W", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IXGRP)
+    {
+        write(fd_out, "X", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    write(fd_out, "\n", sizeof("\n"));
+
+    // drepturi de acces altii
+    write(fd_out, "drepturi de acces altii: ", strlen("drepturi de acces altii: "));
+    if (data.st_mode & S_IROTH)
+    {
+        write(fd_out, "R", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IWOTH)
+    {
+        write(fd_out, "W", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    if (data.st_mode & S_IXOTH)
+    {
+        write(fd_out, "X", 1);
+    }
+    else
+    {
+        write(fd_out, "-", 1);
+    }
+    write(fd_out, "\n", sizeof("\n"));
 
     // inchidere fisiere
     closing_files(fd_in, fd_out);
