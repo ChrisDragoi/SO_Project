@@ -408,7 +408,7 @@ void conversion(char *input_path)
     if (read_b == -1)
         r_error();
 
-    lseek(fd_bmp, 32, 0);
+    lseek(fd_bmp, 54, SEEK_SET);
     int p_gri;
     unsigned char rgb[3];
     for (int i = 0; i < width; i++)
