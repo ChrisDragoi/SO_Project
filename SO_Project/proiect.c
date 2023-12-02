@@ -225,7 +225,7 @@ void process_bmp_file(char *input_path, char *output_path)
     exit(9);
 }
 
-void process_regular_file(char *input_path, char *output_path)
+void process_regular_file(char *input_path, char *output_path, char character)
 {
     struct stat data;
     char dimensiune[20], user_id[20], time[20];
@@ -301,6 +301,59 @@ void process_regular_file(char *input_path, char *output_path)
         exit(-1);
     }
     exit(7);
+
+    int pipe_fd[2];
+    if (pipe(pipe_fd) == -1)
+    {
+        perror("Error creating pipe:(  ");
+        exit(-1);
+    }
+
+    int status;
+    pid_t pid_content = fork();
+    if (pid_content == -1)
+    {
+        perror("Error at fork:(  ");
+        exit(-1);
+    }
+
+    if (pid_content == 0)
+    {
+        close(pipe_fd[0]);
+        int number;
+        FILE *fp = fopen("sentence_count.txt", "r");
+        if (fp != NULL)
+        {
+            fscanf(fp, "%d", &number);
+            fclose(fp);
+        }
+        fp = fopen("sentence_count.txt", "w");
+        if (fp != NULL)
+        {
+            fclose(fp);
+            truncate("sentence_count.txt", 0);
+        }
+        if (execlp("./script.sh", "./script.sh", &character ,input_path, NULL) == -1)
+        {
+            perror("Error at execlp:(  ");
+            exit(-1);
+        }
+        write(pipe_fd[1], &number, sizeof(int));
+        close(pipe_fd[1]);
+        exit(0);
+    }
+    else
+    {
+        // Proces parinte așteaptă terminarea procesului fiu pentru generarea conținutului
+        waitpid(pid_content, &status, 0);
+        int nr;
+        close(pipe_fd[1]);
+        read(pipe_fd[0], &nr, sizeof(int));
+        close(pipe_fd[0]);
+        printf("”S-a încheiat procesul cu pid-ul %d și codul %d", pid_content, WEXITSTATUS(status));
+        printf("Au fost identificate in total %d propozitii corecte care contin caracterul %c.\n", nr, character);
+        
+    }
 }
 
 void process_directory(char *dir_path, char *output_path)
@@ -363,7 +416,7 @@ void process_directory(char *dir_path, char *output_path)
     exit(5);
 }
 
-void process_file(char *input_path, char *output_path)
+void process_file(char *input_path, char *output_path, char character)
 
 {
     struct stat data;
@@ -380,7 +433,7 @@ void process_file(char *input_path, char *output_path)
     else if (S_ISREG(data.st_mode))
     {
 
-        process_regular_file(input_path, output_path);
+        process_regular_file(input_path, output_path, character);
     }
 }
 
@@ -432,7 +485,8 @@ void conversion(char *input_path)
         close_error();
     }
 }
-void process_single_directory(char *input_path, char *output_directory)
+
+void process_single_directory(char *input_path, char *output_directory, char character)
 {
     pid_t pid, pid_img;
     int status;
@@ -447,55 +501,25 @@ void process_single_directory(char *input_path, char *output_directory)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
-        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
+        if (strstr(entry->d_name, ".bmp") != NULL)
         {
-            if (strstr(entry->d_name, ".bmp") != NULL)
-            {
-                pid_img = fork();
-                if (pid_img == -1)
-                {
-                    perror("Error at fork:(  ");
-                    exit(-1);
-                }
-                if (pid_img == 0)
-                {
-                    char file_path[257];
-                    snprintf(file_path, 257, "%s/%s", input_path, entry->d_name); // fisier cu directorul in care se afla
-                    conversion(file_path);
-                    exit(0);
-                }
-                else
-                {
-                    // Proces parinte
-                    waitpid(pid_img, &status, 0);
-                    if (WIFEXITED(status))
-                    {
-                        printf("S-a incheiat procesul cu pid-ul %d si codul %d.\n", pid, WEXITSTATUS(status));
-                        total_lines_written += WEXITSTATUS(status);
-                    }
-                }
-            }
-            pid = fork();
-
-            if (pid == -1)
+            pid_img = fork();
+            if (pid_img == -1)
             {
                 perror("Error at fork:(  ");
                 exit(-1);
             }
-
-            if (pid == 0)
-            { // Proces fiu
+            if (pid_img == 0)
+            {
                 char file_path[257];
-                char output_path[257];
-                snprintf(file_path, 257, "%s/%s", input_path, entry->d_name);                        // fisier cu directorul in care se afla
-                snprintf(output_path, 280, "%s/%s_statistica.txt", output_directory, entry->d_name); // fisier statistica
-                process_file(file_path, output_path);
-                exit(0); // End fiu
+                snprintf(file_path, 257, "%s/%s", input_path, entry->d_name); // fisier cu directorul in care se afla
+                conversion(file_path);
+                exit(0);
             }
             else
             {
                 // Proces parinte
-                waitpid(pid, &status, 0);
+                waitpid(pid_img, &status, 0);
                 if (WIFEXITED(status))
                 {
                     printf("S-a incheiat procesul cu pid-ul %d si codul %d.\n", pid, WEXITSTATUS(status));
@@ -503,25 +527,52 @@ void process_single_directory(char *input_path, char *output_directory)
                 }
             }
         }
+        pid = fork();
+
+        if (pid == -1)
+        {
+            perror("Error at fork:(  ");
+            exit(-1);
+        }
+
+        if (pid == 0)
+        { // Proces fiu
+            char file_path[257];
+            char output_path[257];
+            snprintf(file_path, 257, "%s/%s", input_path, entry->d_name);                        // fisier cu directorul in care se afla
+            snprintf(output_path, 280, "%s/%s_statistica.txt", output_directory, entry->d_name); // fisier statistica
+            process_file(file_path, output_path, character);
+            exit(0); // End fiu
+        }
+        else
+        {
+            // Proces parinte
+            waitpid(pid, &status, 0);
+            if (WIFEXITED(status))
+            {
+                printf("S-a incheiat procesul cu pid-ul %d si codul %d.\n", pid, WEXITSTATUS(status));
+                total_lines_written += WEXITSTATUS(status);
+            }
+        }
     }
 
     closedir(dir);
+    printf("Au fost identificate in total %d propozitii corecte care contin caracterul %c\n", total_lines_written, character);
 }
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
+    if (argc != 4)
     {
-        fprintf(stderr, "Usage: %s input_directory output_directory\n", argv[0]);
+        fprintf(stderr, "Usage: %s input_directory output_directory character\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
     char *input_directory = argv[1];
     char *output_directory = argv[2];
+    char character = argv[3][0];
 
-    process_single_directory(input_directory, output_directory);
-
-    printf("Numarul total de linii este: %d\n", total_lines_written);
+    process_single_directory(input_directory, output_directory, character);
 
     return 0;
 }
