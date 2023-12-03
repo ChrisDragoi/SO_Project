@@ -13,6 +13,27 @@
 
 int total_lines_written = 0;
 
+void run_sentence_counter(const char *file_content, char c)
+{
+    char command[1000];
+    sprintf(command, "bash script.sh %c", c);
+
+    // Open pipe to bash script input
+    FILE *pipe = NULL;
+    if ((pipe = popen(command, "w")) == NULL)
+    {
+        exit(-1);
+    }
+
+    // Feed file content to bash script
+    fprintf(pipe, "%s", file_content);
+
+    if (pclose(pipe) == -1)
+    {
+        exit(-1);
+    }
+}
+
 void wr_error()
 {
     perror("Some error at writing:(  ");
@@ -225,6 +246,46 @@ void process_bmp_file(char *input_path, char *output_path)
     exit(9);
 }
 
+void sentences(char *input_path, char character)
+{
+    int status;
+    if (strstr(input_path, ".bmp") == NULL)
+    {
+        int pipe_fd[2];
+        if (pipe(pipe_fd) == -1)
+        {
+            perror("Error creating pipe:(  ");
+            exit(-1);
+        }
+
+        pid_t pid_content = fork();
+        if (pid_content == -1)
+        {
+            perror("Error at fork:(  ");
+            exit(-1);
+        }
+
+        if (pid_content == 0)
+        {
+            close(pipe_fd[0]);
+            dup2(pipe_fd[1], STDOUT_FILENO);
+            close(pipe_fd[1]);
+            run_sentence_counter(input_path, character);
+
+            exit(0);
+        }
+        else
+        {
+            waitpid(pid_content, &status, 0);
+            int nr;
+            close(pipe_fd[1]);
+            read(pipe_fd[0], &nr, sizeof(int));
+            close(pipe_fd[0]);
+            printf("S-a încheiat procesul NUMARARE cu pid-ul %d și codul %d.\n", pid_content, WEXITSTATUS(status));
+            printf("Au fost identificate in total %d propozitii corecte care contin caracterul %c.\n", nr, character);
+        }
+    }
+}
 void process_regular_file(char *input_path, char *output_path, char character)
 {
     struct stat data;
@@ -236,11 +297,15 @@ void process_regular_file(char *input_path, char *output_path, char character)
         perror("Eroare la functia lstat:(    ");
         exit(-1);
     }
+    // bmp
     if (strstr(input_path, ".bmp") != NULL)
     {
         process_bmp_file(input_path, output_path);
         return;
     }
+    //propozitii cu pipe
+    sentences(input_path,character);
+    //procesare regular
     int fd_out = creat(output_path, S_IXUSR | S_IWUSR | S_IRUSR);
     if (fd_out == -1)
     {
@@ -301,59 +366,6 @@ void process_regular_file(char *input_path, char *output_path, char character)
         exit(-1);
     }
     exit(7);
-
-    int pipe_fd[2];
-    if (pipe(pipe_fd) == -1)
-    {
-        perror("Error creating pipe:(  ");
-        exit(-1);
-    }
-
-    int status;
-    pid_t pid_content = fork();
-    if (pid_content == -1)
-    {
-        perror("Error at fork:(  ");
-        exit(-1);
-    }
-
-    if (pid_content == 0)
-    {
-        close(pipe_fd[0]);
-        int number;
-        FILE *fp = fopen("sentence_count.txt", "r");
-        if (fp != NULL)
-        {
-            fscanf(fp, "%d", &number);
-            fclose(fp);
-        }
-        fp = fopen("sentence_count.txt", "w");
-        if (fp != NULL)
-        {
-            fclose(fp);
-            truncate("sentence_count.txt", 0);
-        }
-        if (execlp("./script.sh", "./script.sh", &character ,input_path, NULL) == -1)
-        {
-            perror("Error at execlp:(  ");
-            exit(-1);
-        }
-        write(pipe_fd[1], &number, sizeof(int));
-        close(pipe_fd[1]);
-        exit(0);
-    }
-    else
-    {
-        // Proces parinte așteaptă terminarea procesului fiu pentru generarea conținutului
-        waitpid(pid_content, &status, 0);
-        int nr;
-        close(pipe_fd[1]);
-        read(pipe_fd[0], &nr, sizeof(int));
-        close(pipe_fd[0]);
-        printf("”S-a încheiat procesul cu pid-ul %d și codul %d", pid_content, WEXITSTATUS(status));
-        printf("Au fost identificate in total %d propozitii corecte care contin caracterul %c.\n", nr, character);
-        
-    }
 }
 
 void process_directory(char *dir_path, char *output_path)
@@ -420,6 +432,7 @@ void process_file(char *input_path, char *output_path, char character)
 
 {
     struct stat data;
+
     if (lstat(input_path, &data) == -1)
     {
         perror("Eroare la functia lstat:(    ");
@@ -432,7 +445,6 @@ void process_file(char *input_path, char *output_path, char character)
     }
     else if (S_ISREG(data.st_mode))
     {
-
         process_regular_file(input_path, output_path, character);
     }
 }
@@ -497,6 +509,12 @@ void process_single_directory(char *input_path, char *output_directory, char cha
         perror("Some error opening directory:(  ");
         exit(-1);
     }
+    struct stat data;
+    if (lstat(input_path, &data) == -1)
+    {
+        perror("Eroare la functia lstat:(    ");
+        exit(-1);
+    }
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
@@ -522,7 +540,7 @@ void process_single_directory(char *input_path, char *output_directory, char cha
                 waitpid(pid_img, &status, 0);
                 if (WIFEXITED(status))
                 {
-                    printf("S-a incheiat procesul cu pid-ul %d si codul %d.\n", pid, WEXITSTATUS(status));
+                    printf("S-a incheiat procesul CONVERSIE cu pid-ul %d si codul %d.\n", pid, WEXITSTATUS(status));
                     total_lines_written += WEXITSTATUS(status);
                 }
             }
@@ -557,7 +575,7 @@ void process_single_directory(char *input_path, char *output_directory, char cha
     }
 
     closedir(dir);
-    printf("Au fost identificate in total %d propozitii corecte care contin caracterul %c\n", total_lines_written, character);
+    printf("S-au scris in total %d linii.\n", total_lines_written);
 }
 
 int main(int argc, char *argv[])
