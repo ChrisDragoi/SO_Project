@@ -13,7 +13,7 @@
 
 int total_lines_written = 0;
 
-void run_sentence_counter(const char *file_content, char c)
+void run_bash_counter(const char *file_content, char c)
 {
     char command[1000];
     sprintf(command, "bash script.sh %c", c);
@@ -270,14 +270,14 @@ void sentences(char *input_path, char character)
             close(pipe_fd[0]);
             dup2(pipe_fd[1], STDOUT_FILENO);
             close(pipe_fd[1]);
-            run_sentence_counter(input_path, character);
+            run_bash_counter(input_path, character);
 
             exit(0);
         }
         else
         {
             waitpid(pid_content, &status, 0);
-            int nr;
+            int nr = 0;
             close(pipe_fd[1]);
             read(pipe_fd[0], &nr, sizeof(int));
             close(pipe_fd[0]);
@@ -303,9 +303,9 @@ void process_regular_file(char *input_path, char *output_path, char character)
         process_bmp_file(input_path, output_path);
         return;
     }
-    //propozitii cu pipe
-    sentences(input_path,character);
-    //procesare regular
+    // propozitii cu pipe
+    sentences(input_path, character);
+    // procesare regular file
     int fd_out = creat(output_path, S_IXUSR | S_IWUSR | S_IRUSR);
     if (fd_out == -1)
     {
@@ -517,8 +517,13 @@ void process_single_directory(char *input_path, char *output_directory, char cha
     }
 
     struct dirent *entry;
+
     while ((entry = readdir(dir)) != NULL)
     {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            continue; 
+        }
         if (strstr(entry->d_name, ".bmp") != NULL)
         {
             pid_img = fork();
@@ -560,6 +565,7 @@ void process_single_directory(char *input_path, char *output_directory, char cha
             snprintf(file_path, 257, "%s/%s", input_path, entry->d_name);                        // fisier cu directorul in care se afla
             snprintf(output_path, 280, "%s/%s_statistica.txt", output_directory, entry->d_name); // fisier statistica
             process_file(file_path, output_path, character);
+
             exit(0); // End fiu
         }
         else
