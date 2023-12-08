@@ -84,7 +84,7 @@ void process_bmp_file(char *input_path, char *output_path)
     // Nume fisier
     write(fd_out, "nume fisier: ", strlen("nume fisier: "));
     write(fd_out, input_path, strlen(input_path));
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     int width, height;
 
@@ -99,7 +99,7 @@ void process_bmp_file(char *input_path, char *output_path)
         sprintf(str_width, "%d", width);
         if ((write_b = write(fd_out, str_width, strlen(str_width))) == -1)
             wr_error();
-        write(fd_out, "\n", sizeof("\n"));
+        write(fd_out, "\n", 1);
     }
 
     read_b = read(fd_bmp, &height, 4);
@@ -112,7 +112,7 @@ void process_bmp_file(char *input_path, char *output_path)
         sprintf(str_height, "%d", height);
         if ((write_b = write(fd_out, str_height, strlen(str_height))) == -1)
             wr_error();
-        write(fd_out, "\n", sizeof("\n"));
+        write(fd_out, "\n", 1);
     }
     // stat data
     struct stat data;
@@ -131,13 +131,13 @@ void process_bmp_file(char *input_path, char *output_path)
     write(fd_out, "dimensiune: ", strlen("dimensiune: "));
     if ((write_b = write(fd_out, dimensiune, strlen(dimensiune))) == -1)
         wr_error();
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // utilizator id
     write(fd_out, "utilizator id: ", strlen("utilizator id: "));
     if ((write_b = write(fd_out, user_id, strlen(user_id))) == -1)
         wr_error();
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // timpul ultimei modificari
     write(fd_out, "timpul ultimei modificari: ", strlen("timpul ultimei modificari: "));
@@ -149,7 +149,7 @@ void process_bmp_file(char *input_path, char *output_path)
     }
     if ((write_b = write(fd_out, formatted_time, strlen(formatted_time))) == -1)
         wr_error();
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // drepturi de acces user
     write(fd_out, "drepturi de acces user: ", strlen("drepturi de acces user: "));
@@ -177,7 +177,7 @@ void process_bmp_file(char *input_path, char *output_path)
     {
         write(fd_out, "-", 1);
     }
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // drepturi de acces grup
     write(fd_out, "drepturi de acces grup: ", strlen("drepturi de acces grup: "));
@@ -316,49 +316,49 @@ void process_regular_file(char *input_path, char *output_path, char character)
     // Nume fisier
     write(fd_out, "nume fisier: ", strlen("nume fisier: "));
     write(fd_out, input_path, strlen(input_path));
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Dimensiune
     write(fd_out, "dimensiune: ", strlen("dimensiune: "));
     sprintf(dimensiune, "%ld", data.st_blksize);
     if ((write_b = write(fd_out, dimensiune, strlen(dimensiune))) == -1)
         perror("Some error at writing:(  ");
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Utilizator ID
     write(fd_out, "utilizator id: ", strlen("utilizator id: "));
     sprintf(user_id, "%d", data.st_uid);
     if ((write_b = write(fd_out, user_id, strlen(user_id))) == -1)
         perror("Some error at writing:(  ");
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Timpul ultimei modificari
     write(fd_out, "timpul ultimei modificari: ", strlen("timpul ultimei modificari: "));
     sprintf(time, "%ld", data.st_atime);
     if ((write_b = write(fd_out, time, strlen(time))) == -1)
         perror("Some error at writing:(  ");
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Drepturi de acces
     write(fd_out, "drepturi de acces user: ", strlen("drepturi de acces user: "));
     write(fd_out, (data.st_mode & S_IRUSR) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWUSR) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXUSR) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Drepturi de acces grup
     write(fd_out, "drepturi de acces grup: ", strlen("drepturi de acces grup: "));
     write(fd_out, (data.st_mode & S_IRGRP) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWGRP) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXGRP) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Drepturi de acces altii
     write(fd_out, "drepturi de acces altii: ", strlen("drepturi de acces altii: "));
     write(fd_out, (data.st_mode & S_IROTH) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWOTH) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXOTH) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     if (close(fd_out) == -1)
     {
@@ -388,7 +388,7 @@ void process_directory(char *dir_path, char *output_path)
     // Nume director
     write(fd_out, "nume director: ", strlen("nume director: "));
     write(fd_out, dir_path, strlen(dir_path));
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // user
     write(fd_out, "identificatorul utilizatorului: ", strlen("identificatorul utilizatorului: "));
@@ -399,26 +399,26 @@ void process_directory(char *dir_path, char *output_path)
         perror("Some error at writing:(  ");
         exit(-1);
     }
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     // Drepturi de acces user, grup, altii pentru director
     write(fd_out, "drepturi de acces user: ", strlen("drepturi de acces user: "));
     write(fd_out, (data.st_mode & S_IRUSR) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWUSR) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXUSR) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     write(fd_out, "drepturi de acces grup: ", strlen("drepturi de acces grup: "));
     write(fd_out, (data.st_mode & S_IRGRP) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWGRP) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXGRP) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     write(fd_out, "drepturi de acces altii: ", strlen("drepturi de acces altii: "));
     write(fd_out, (data.st_mode & S_IROTH) ? "R" : "-", 1);
     write(fd_out, (data.st_mode & S_IWOTH) ? "W" : "-", 1);
     write(fd_out, (data.st_mode & S_IXOTH) ? "X" : "-", 1);
-    write(fd_out, "\n", sizeof("\n"));
+    write(fd_out, "\n", 1);
 
     if (close(fd_out) == -1)
     {
